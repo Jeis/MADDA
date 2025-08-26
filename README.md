@@ -34,7 +34,7 @@ Enterprise-grade AR multiplayer platform powered by Nakama game server, featurin
 └─────────────────┬───────────────────────────┘
                   │ WebSocket/HTTP
 ┌─────────────────▼───────────────────────────┐
-│         Nakama Game Server (3.17.1)         │
+│         Nakama Game Server (3.30.0)         │
 │   • Match Engine (60 FPS AR updates)        │
 │   • Session Management (6-char codes)       │
 │   • Storage API (anchors, user data)        │
@@ -127,7 +127,7 @@ curl -X POST "http://localhost:7350/v2/rpc/create_anonymous_session" \
 ### Requirements
 
 **Unity Version**: 2022.3 LTS or later (recommended: 2022.3.45f1+)
-**AR Foundation**: 4.2.10+ (included in project)
+**AR Foundation**: 5.1.5+ (included in project)
 **Platform Support**:
 - iOS 11.0+ (ARKit)
 - Android 7.0+ (ARCore)
@@ -137,12 +137,12 @@ curl -X POST "http://localhost:7350/v2/rpc/create_anonymous_session" \
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| AR Foundation | 4.2.10 | Cross-platform AR framework |
-| ARCore XR Plugin | 4.2.10 | Android AR support |
-| ARKit XR Plugin | 4.2.10 | iOS AR support |
-| Universal Render Pipeline | 12.1.13 | Optimized rendering |
+| AR Foundation | 5.1.5 | Cross-platform AR framework |
+| ARCore XR Plugin | 5.1.5 | Android AR support |
+| ARKit XR Plugin | 5.1.5 | iOS AR support |
+| Universal Render Pipeline | 14.0.11 | Optimized rendering |
 | Newtonsoft JSON | 3.2.1 | JSON serialization |
-| Unity Netcode | 1.7.1 | Networking foundation |
+| Unity Netcode | 1.12.0 | Networking foundation |
 
 ### Installation
 
