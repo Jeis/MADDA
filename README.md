@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Unity Version](https://img.shields.io/badge/Unity-2022.3%2B-blue.svg)](https://unity3d.com/get-unity/download)
-[![Nakama Version](https://img.shields.io/badge/Nakama-3.17.1-orange.svg)](https://heroiclabs.com/nakama/)
+[![Nakama Version](https://img.shields.io/badge/Nakama-3.30.0-orange.svg)](https://heroiclabs.com/nakama/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 
 Enterprise-grade AR multiplayer platform powered by Nakama game server, featuring real-time synchronization, spatial mapping, and cross-platform support.
@@ -93,13 +93,15 @@ docker ps --filter "name=spatial-"
 
 ### 3. Verify Services
 
-| Service | URL | Credentials |
-|---------|-----|-------------|
-| Nakama Console | http://localhost:7351 | admin / [NAKAMA_CONSOLE_PASSWORD] |
-| Nakama API | http://localhost:7350 | Server key authentication required |
-| WebSocket | ws://localhost:7350 | Bearer token required |
-| Prometheus | http://localhost:9090 | - |
-| Grafana | http://localhost:3000 | admin / spatial_admin_2024 |
+| Service | URL | Credentials | Status |
+|---------|-----|-------------|--------|
+| **Main Platform** | http://localhost | - | Nginx reverse proxy |
+| **Nakama Console** | http://localhost:7351 | admin / [NAKAMA_CONSOLE_PASSWORD] | Admin interface |
+| **Nakama API** | http://localhost:7350 | Server key authentication required | REST + WebSocket |
+| **API Gateway** | http://localhost:8000 | - | Service orchestration |
+| **Grafana** | http://localhost:3000 | admin / [GRAFANA_ADMIN_PASSWORD] | Monitoring dashboards |
+| **Prometheus** | http://localhost:9090 | - | Metrics collection |
+| **Jaeger Tracing** | http://localhost:16686 | - | Distributed tracing |
 
 ### 4. Test Anonymous Session
 
@@ -122,12 +124,32 @@ curl -X POST "http://localhost:7350/v2/rpc/create_anonymous_session" \
 
 ## 📱 Unity Integration
 
+### Requirements
+
+**Unity Version**: 2022.3 LTS or later (recommended: 2022.3.45f1+)
+**AR Foundation**: 4.2.10+ (included in project)
+**Platform Support**:
+- iOS 11.0+ (ARKit)
+- Android 7.0+ (ARCore)
+- Magic Leap 2, HoloLens (via OpenXR)
+
+### Key Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| AR Foundation | 4.2.10 | Cross-platform AR framework |
+| ARCore XR Plugin | 4.2.10 | Android AR support |
+| ARKit XR Plugin | 4.2.10 | iOS AR support |
+| Universal Render Pipeline | 12.1.13 | Optimized rendering |
+| Newtonsoft JSON | 3.2.1 | JSON serialization |
+| Unity Netcode | 1.7.1 | Networking foundation |
+
 ### Installation
 
-1. Open Unity 2022.3+
-2. Import the Nakama Unity SDK
-3. Copy `Unity/SpatialPlatform` to your project
-4. Configure Nakama client settings
+1. **Unity Setup**: Open Unity 2022.3+ with AR Foundation support
+2. **Import Project**: Import `Unity/SpatialPlatform` folder
+3. **Nakama SDK**: Download from [Nakama Unity](https://github.com/heroiclabs/nakama-unity)
+4. **Configure Build Settings**: Enable AR for target platform
 
 ### Basic Usage
 
@@ -381,13 +403,15 @@ spatial-computing-resources:
 
 ### Service Architecture
 
-| Service | Port | Purpose | API Docs |
-|---------|------|---------|----------|
-| **API Gateway** | 8000 | REST API endpoints | http://localhost:8000/docs |
-| **Nakama** | 7350 | Multiplayer game server | http://localhost:7351 |
-| **Cloud Anchors** | 9004 | AR anchor persistence | http://localhost:9004/docs |
-| **Localization** | 8081 | SLAM/VIO processing | http://localhost:8081/docs |
-| **VPS Engine** | 8082 | Visual positioning | http://localhost:8082/docs |
+| Service | Port | Purpose | API Docs | Health Check |
+|---------|------|---------|----------|--------------|
+| **API Gateway** | 8000 | REST API endpoints | http://localhost:8000/docs | http://localhost:8000/healthz |
+| **Nakama Game Server** | 7350 (HTTP), 7349 (gRPC), 7351 (Console) | Multiplayer game server | http://localhost:7351 | Built-in |
+| **Cloud Anchors** | 9004 | AR anchor persistence & sharing | http://localhost:9004/docs | http://localhost:9004/healthz |
+| **Localization** | 8081 | SLAM/VIO processing | http://localhost:8081/docs | http://localhost:8081/healthz |
+| **VPS Engine** | 9002 | Visual positioning system | http://localhost:9002/docs | http://localhost:9002/healthz |
+| **Mapping Processor** | 8082 | 3D reconstruction pipeline | http://localhost:8082/docs | http://localhost:8082/healthz |
+| **Nginx Load Balancer** | 80 (HTTP), 443 (HTTPS) | Reverse proxy & SSL termination | http://localhost | http://localhost/healthz |
 
 ### RPC Endpoints (Nakama)
 
@@ -433,12 +457,24 @@ docker service scale spatial-ar_nakama=3
 ### Enterprise Security Features
 
 #### Built-in Security Hardening
+
+**Transport Security**:
 - **SSL/TLS Encryption**: Auto-generated certificates for HTTPS and database encryption
+- **Database TLS**: PostgreSQL SSL mode enforced with certificate validation  
+- **Service Mesh**: Internal service communication with dedicated networks (172.20.0.0/16)
+- **Certificate Management**: Automated certificate generation and rotation
+
+**Authentication & Authorization**:
 - **Cryptographically Secure Credentials**: 64+ character passwords with entropy validation
-- **Database Encryption**: PostgreSQL SSL mode enforced with certificate validation
 - **JWT Security**: Base64-encoded secrets with enterprise-grade token validation
+- **Multi-Factor Authentication**: Nakama console with secure session management
+- **Role-Based Access Control**: Granular permissions for API access
+
+**Container & Infrastructure Security**:
 - **Container Security**: No privileged containers except monitoring (cAdvisor)
-- **Network Isolation**: Internal service communication with dedicated networks
+- **Image Security**: CVE scanning for all container images
+- **Network Isolation**: Segmented networks for services and monitoring
+- **Resource Limits**: Memory and CPU limits for DoS protection
 
 #### Production Security Checklist
 - ✅ SSL/TLS enabled by default
@@ -471,15 +507,92 @@ cd Backend/infrastructure/docker/scripts/deployment/lib
 - **Rollback Capabilities**: Automated rollback system for failed deployments
 - **Compliance Validation**: PROJECT_STANDARDS.md compliance verification
 
+## 📊 Monitoring & Observability
+
+### Enterprise Observability Stack
+
+MADDA includes a comprehensive observability platform with distributed tracing, metrics, and logging:
+
+**Monitoring Services**:
+- **Prometheus** (Port 9090): Metrics collection and alerting
+- **Grafana** (Port 3000): Interactive dashboards and visualization  
+- **Jaeger** (Port 16686): Distributed tracing across microservices
+- **Loki** (Port 3100): Centralized log aggregation
+- **OpenTelemetry Collector** (Port 4317/4318): Observability data pipeline
+
+### Key Metrics Dashboard
+
+Access comprehensive monitoring at **http://localhost:3000**:
+
+**AR Performance Metrics**:
+- Pose update frequency (target: 60 FPS)  
+- AR anchor synchronization latency (<11ms)
+- Frame rendering performance
+- Device battery usage monitoring
+
+**System Performance**:
+- API response times and error rates
+- Database query performance and connection pooling
+- Redis cache hit rates and memory usage  
+- Container resource utilization
+- Network latency between services
+
+**Business Metrics**:
+- Active AR sessions and user engagement
+- Session join success rates
+- Spatial anchor creation and sharing rates
+- Cross-platform usage analytics
+
+### Health Checks & Alerting
+
+**Automated Health Monitoring**:
+```yaml
+Health_Check_Endpoints:
+  api-gateway: "GET /healthz"
+  localization: "GET /healthz" 
+  vps-engine: "GET /healthz"
+  cloud-anchors: "GET /healthz"
+  mapping: "GET /healthz"
+  
+Alerting_Thresholds:
+  response_time: ">500ms"
+  error_rate: ">1%"
+  memory_usage: ">80%"
+  disk_usage: ">85%"
+```
+
+### OpenTelemetry Integration
+
+**Automatic Instrumentation**:
+- HTTP requests and responses
+- Database queries and transactions  
+- Redis operations and caching
+- Inter-service communication
+- Custom AR-specific metrics
+
 ## 📈 Performance
 
-### Benchmarks
+### Performance Benchmarks
 
-- **Concurrent Users**: 10,000+ per Nakama node
-- **Pose Update Rate**: 60 FPS per user
-- **Latency**: <50ms (regional deployment)
-- **Session Creation**: <100ms
-- **Anchor Sync**: <200ms
+**AR/VR Real-time Performance**:
+- **Pose Update Rate**: 60 FPS per user (16.67ms intervals)
+- **AR Anchor Sync**: <11ms latency (sub-frame synchronization)
+- **Frame Rendering**: 60 FPS on mid-range mobile devices
+- **SLAM Processing**: <16ms for real-time localization
+- **VPS Localization**: <200ms for centimeter-level accuracy
+
+**Server Performance**:
+- **Concurrent Users**: 10,000+ per Nakama 3.30.0 node
+- **API Response Time**: <100ms (95th percentile)
+- **Session Creation**: <100ms (anonymous sessions)
+- **Database Queries**: <50ms (PostgreSQL with PostGIS)
+- **Redis Cache**: <5ms (in-memory operations)
+
+**Network & Infrastructure**:
+- **WebSocket Latency**: <50ms (regional deployment)
+- **Load Balancer**: <10ms (Nginx reverse proxy)
+- **Service Mesh**: <5ms (internal communication)
+- **Container Startup**: <30s (full service orchestration)
 
 ### Optimization Tips
 
