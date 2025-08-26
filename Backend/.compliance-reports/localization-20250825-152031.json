@@ -1,0 +1,15 @@
+{
+  "service": "localization",
+  "timestamp": "2025-08-25T12:20:31Z",
+  "compliance_status": "COMPLIANT",
+  "violations": [
+
+  ],
+  "registry_version": "1.0.0",
+  "validation_checks": {
+    "registry_validation": true,
+    "vulnerability_scanning": true,
+    "license_compliance": true,
+    "lockfile_generation": true
+  }
+}

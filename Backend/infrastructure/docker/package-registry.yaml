@@ -1,0 +1,360 @@
+# Spatial Platform - Central Package Registry
+# Microsoft-style enterprise package management
+# Version: 1.0.0
+# PROJECT_STANDARDS.md Phase 2 Compliance
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-01-25"
+  compliance_level: "enterprise"
+  security_baseline: "PROJECT_STANDARDS.md"
+  python_version: "3.11-slim"
+
+# =================== APPROVAL POLICIES ===================
+approval_policies:
+  security_scan_required: true
+  vulnerability_threshold: "medium"
+  license_compliance: true
+  performance_validation: true
+  dependency_graph_check: true
+  version_pinning: "exact"  # exact, minor, major
+
+# =================== APPROVED PACKAGES ===================
+approved_packages:
+  # Core Web Framework - FastAPI Stack
+  fastapi:
+    versions: ["0.104.1", "0.105.0", "0.106.0", "0.107.0", "0.108.0", "0.109.0", "0.110.0", "0.111.0", "0.112.0", "0.113.0", "0.114.0", "0.115.0"]
+    current: "0.104.1"
+    target: "0.115.0"
+    license: "MIT"
+    category: "framework"
+    
+  uvicorn:
+    versions: ["0.24.0", "0.25.0", "0.26.0", "0.27.0", "0.28.0", "0.29.0", "0.30.0", "0.31.0"]
+    current: "0.24.0"
+    target: "0.31.0"
+    extras: ["standard"]
+    license: "BSD-3-Clause"
+    category: "framework"
+    
+  pydantic:
+    versions: ["2.5.0", "2.5.1", "2.5.2", "2.5.3", "2.6.0", "2.6.1", "2.6.2", "2.6.3", "2.6.4", "2.7.0", "2.7.1", "2.7.2", "2.7.3", "2.7.4", "2.8.0", "2.8.1", "2.8.2", "2.9.0", "2.9.1", "2.9.2"]
+    current: "2.5.0"
+    target: "2.9.2"
+    license: "MIT"
+    category: "framework"
+    
+  pydantic-settings:
+    versions: ["2.1.0", "2.2.0", "2.2.1", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.4.0", "2.5.0", "2.5.1", "2.5.2", "2.6.0", "2.6.1"]
+    current: "2.1.0"
+    target: "2.6.1"
+    license: "MIT"
+    category: "framework"
+
+  # Database Stack
+  sqlalchemy:
+    versions: ["2.0.23", "2.0.24", "2.0.25", "2.0.26", "2.0.27", "2.0.28", "2.0.29", "2.0.30", "2.0.31", "2.0.32", "2.0.33", "2.0.34", "2.0.35", "2.0.36"]
+    current: "2.0.23"
+    target: "2.0.36"
+    extras: ["asyncio"]
+    license: "MIT"
+    category: "database"
+    
+  asyncpg:
+    versions: ["0.29.0", "0.30.0"]
+    current: "0.29.0"
+    target: "0.30.0"
+    license: "Apache-2.0"
+    category: "database"
+    
+  psycopg2-binary:
+    versions: ["2.9.9", "2.9.10"]
+    current: "2.9.9"
+    target: "2.9.10"
+    license: "LGPL-3.0"
+    category: "database"
+    notes: "Binary distribution for production"
+    
+  redis:
+    versions: ["5.0.0", "5.0.1", "5.0.2", "5.0.3", "5.0.4", "5.0.5", "5.0.6", "5.0.7", "5.0.8", "5.0.9", "5.0.10", "5.1.0", "5.1.1", "5.1.2", "5.2.0"]
+    current: "5.0.0"
+    target: "5.2.0"
+    extras: ["hiredis"]
+    license: "MIT"
+    category: "database"
+    notes: "Compatible with Redis 7 server"
+
+  # Security & Authentication
+  passlib:
+    versions: ["1.7.4"]
+    current: "1.7.4"
+    target: "1.7.4"
+    extras: ["bcrypt"]
+    license: "BSD-2-Clause"
+    category: "security"
+    
+  python-jose:
+    versions: ["3.3.0"]
+    current: "3.3.0"
+    target: "3.3.0"
+    extras: ["cryptography"]
+    license: "MIT"
+    category: "security"
+    
+  cryptography:
+    versions: ["41.0.7", "41.0.8", "42.0.0", "42.0.1", "42.0.2", "42.0.3", "42.0.4", "42.0.5", "42.0.6", "42.0.7", "42.0.8", "43.0.0", "43.0.1", "43.0.2", "43.0.3"]
+    current: "41.0.7"
+    target: "43.0.3"
+    license: "Apache-2.0"
+    category: "security"
+    notes: "FIPS compliant versions available"
+
+  # Machine Learning & Computer Vision
+  torch:
+    versions: ["2.1.1", "2.1.2", "2.2.0", "2.2.1", "2.2.2", "2.3.0", "2.3.1", "2.4.0", "2.4.1", "2.5.0", "2.5.1"]
+    current: "2.1.1"
+    target: "2.5.1"
+    license: "BSD-3-Clause"
+    category: "ml"
+    notes: "CUDA support required for GPU workloads"
+    
+  torchvision:
+    versions: ["0.16.1", "0.16.2", "0.17.0", "0.17.1", "0.17.2", "0.18.0", "0.18.1", "0.19.0", "0.19.1", "0.20.0", "0.20.1"]
+    current: "0.16.1"
+    target: "0.20.1"
+    license: "BSD-3-Clause"
+    category: "ml"
+    
+  opencv-python:
+    versions: ["4.8.1.78", "4.9.0.80", "4.10.0.82", "4.10.0.84"]
+    current: "4.8.1.78"
+    target: "4.10.0.84"
+    license: "Apache-2.0"
+    category: "cv"
+    notes: "Headless distribution for server environments"
+    
+  numpy:
+    versions: ["1.24.4", "1.25.0", "1.25.1", "1.25.2", "1.26.0", "1.26.1", "1.26.2", "1.26.3", "1.26.4", "2.0.0", "2.0.1", "2.0.2", "2.1.0", "2.1.1", "2.1.2", "2.1.3", "2.2.0"]
+    current: "1.24.4"
+    target: "1.26.4"  # Stay on 1.x for compatibility
+    license: "BSD-3-Clause"
+    category: "scientific"
+    notes: "BLAS/LAPACK optimized, avoid 2.x for now"
+
+  # 3D Processing
+  pycolmap:
+    versions: ["0.4.0", "0.5.0", "0.6.0", "0.6.1"]
+    current: "0.4.0"
+    target: "0.6.1"
+    license: "BSD-3-Clause"
+    category: "3d"
+    
+  open3d:
+    versions: ["0.18.0"]
+    current: "0.18.0"
+    target: "0.18.0"
+    license: "MIT"
+    category: "3d"
+    
+  trimesh:
+    versions: ["4.0.5", "4.0.6", "4.0.7", "4.0.8", "4.0.9", "4.0.10", "4.1.0", "4.1.1", "4.1.2", "4.1.3", "4.1.4", "4.1.5", "4.1.6", "4.1.7", "4.1.8", "4.2.0", "4.2.1", "4.2.2", "4.2.3", "4.2.4", "4.3.0", "4.3.1", "4.3.2", "4.4.0", "4.4.1", "4.4.2", "4.4.3", "4.4.4", "4.4.5", "4.4.6", "4.4.7", "4.4.8", "4.4.9", "4.5.0", "4.5.1", "4.5.2"]
+    current: "4.0.5"
+    target: "4.5.2"
+    license: "MIT"
+    category: "3d"
+
+  # Observability Stack
+  opentelemetry-api:
+    versions: ["1.21.0", "1.22.0", "1.23.0", "1.24.0", "1.25.0", "1.26.0", "1.27.0", "1.28.0", "1.28.1", "1.28.2"]
+    current: "1.21.0"
+    target: "1.28.2"
+    license: "Apache-2.0"
+    category: "observability"
+    
+  opentelemetry-sdk:
+    versions: ["1.21.0", "1.22.0", "1.23.0", "1.24.0", "1.25.0", "1.26.0", "1.27.0", "1.28.0", "1.28.1", "1.28.2"]
+    current: "1.21.0"
+    target: "1.28.2"
+    license: "Apache-2.0"
+    category: "observability"
+    
+  opentelemetry-instrumentation-fastapi:
+    versions: ["0.42b0", "0.43b0", "0.44b0", "0.45b0", "0.46b0", "0.47b0", "0.48b0", "0.49b0", "0.50b0"]
+    current: "0.42b0"
+    target: "0.50b0"
+    license: "Apache-2.0"
+    category: "observability"
+    
+  prometheus-client:
+    versions: ["0.19.0", "0.20.0", "0.21.0", "0.21.1"]
+    current: "0.19.0"
+    target: "0.21.1"
+    license: "Apache-2.0"
+    category: "observability"
+    
+  structlog:
+    versions: ["23.2.0", "23.3.0", "24.1.0", "24.2.0", "24.3.0", "24.4.0"]
+    current: "23.2.0"
+    target: "24.4.0"
+    license: "MIT"
+    category: "observability"
+
+  # Async & Web Utilities
+  aiofiles:
+    versions: ["23.2.1", "24.1.0"]
+    current: "23.2.1"
+    target: "24.1.0"
+    license: "Apache-2.0"
+    category: "utilities"
+    
+  httpx:
+    versions: ["0.25.2", "0.26.0", "0.27.0", "0.27.1", "0.27.2"]
+    current: "0.25.2"
+    target: "0.27.2"
+    license: "BSD-3-Clause"
+    category: "utilities"
+    
+  python-multipart:
+    versions: ["0.0.6", "0.0.7", "0.0.8", "0.0.9", "0.0.10", "0.0.11", "0.0.12", "0.0.13", "0.0.14", "0.0.15", "0.0.16", "0.0.17", "0.0.18"]
+    current: "0.0.6"
+    target: "0.0.18"
+    license: "Apache-2.0"
+    category: "utilities"
+
+  # Development Tools
+  pytest:
+    versions: ["7.4.3", "7.4.4", "8.0.0", "8.0.1", "8.0.2", "8.1.0", "8.1.1", "8.1.2", "8.2.0", "8.2.1", "8.2.2", "8.3.0", "8.3.1", "8.3.2", "8.3.3", "8.3.4"]
+    current: "7.4.3"
+    target: "8.3.4"
+    license: "MIT"
+    category: "dev"
+    
+  black:
+    versions: ["23.11.0", "23.12.0", "23.12.1", "24.1.0", "24.1.1", "24.2.0", "24.3.0", "24.4.0", "24.4.1", "24.4.2", "24.8.0", "24.10.0"]
+    current: "23.11.0"
+    target: "24.10.0"
+    license: "MIT"
+    category: "dev"
+    
+  ruff:
+    versions: ["0.1.7", "0.1.8", "0.1.9", "0.1.10", "0.1.11", "0.1.12", "0.1.13", "0.1.14", "0.1.15", "0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.3.2", "0.3.3", "0.3.4", "0.3.5", "0.3.6", "0.3.7", "0.4.0", "0.4.1", "0.4.2", "0.4.3", "0.4.4", "0.4.5", "0.4.6", "0.4.7", "0.4.8", "0.4.9", "0.4.10", "0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.5.4", "0.5.5", "0.5.6", "0.5.7", "0.6.0", "0.6.1", "0.6.2", "0.6.3", "0.6.4", "0.6.5", "0.6.6", "0.6.7", "0.6.8", "0.6.9", "0.7.0", "0.7.1", "0.7.2", "0.7.3", "0.7.4", "0.8.0", "0.8.1", "0.8.2", "0.8.3"]
+    current: "0.1.7"
+    target: "0.8.3"
+    license: "MIT"
+    category: "dev"
+
+# =================== BLOCKED PACKAGES ===================
+blocked_packages:
+  # Security vulnerabilities
+  - name: "requests"
+    versions: ["<2.31.0"]
+    reason: "CVE-2023-32681 - Proxy-Authorization header leak"
+    cve: "CVE-2023-32681"
+    
+  - name: "pillow"
+    versions: ["<10.0.1"]
+    reason: "Multiple CVEs in image processing"
+    cve: "CVE-2023-44271"
+    
+  - name: "urllib3"
+    versions: ["<2.0.7"]
+    reason: "CVE-2023-45803 - Cookie header parsing"
+    cve: "CVE-2023-45803"
+    
+  - name: "werkzeug"
+    versions: ["<3.0.1"]
+    reason: "CVE-2023-46136 - DoS vulnerability"
+    cve: "CVE-2023-46136"
+    
+  # License incompatibility
+  - name: "mysql-connector-python"
+    versions: ["all"]
+    reason: "GPL license incompatible with commercial deployment"
+    license: "GPL"
+    
+  # Performance/security concerns
+  - name: "tensorflow"
+    versions: ["<2.12.0"]
+    reason: "Multiple security vulnerabilities and compatibility issues"
+    notes: "Use PyTorch instead"
+
+# =================== UPDATE POLICIES ===================
+update_policies:
+  # Automatic updates
+  auto_update_patch: true     # 1.2.3 -> 1.2.4
+  auto_update_minor: false    # 1.2.x -> 1.3.x
+  auto_update_major: false    # 1.x.x -> 2.x.x
+  
+  # Security updates
+  emergency_security_updates: true
+  security_update_window_hours: 24
+  
+  # Review requirements
+  minor_update_review: true
+  major_update_review: true
+  security_team_approval: true
+  
+  # Update schedule
+  scheduled_update_day: "sunday"
+  scheduled_update_time: "02:00"
+  update_freeze_periods:
+    - start: "2025-12-15"
+      end: "2026-01-05"
+      reason: "Holiday freeze"
+
+# =================== COMPLIANCE REQUIREMENTS ===================
+compliance:
+  # License requirements
+  allowed_licenses:
+    - "MIT"
+    - "Apache-2.0"
+    - "BSD-3-Clause"
+    - "BSD-2-Clause"
+    - "ISC"
+    - "LGPL-3.0"  # With review
+    
+  prohibited_licenses:
+    - "GPL"
+    - "AGPL"
+    - "SSPL"
+    
+  # Security requirements
+  vulnerability_thresholds:
+    critical: 0
+    high: 0
+    medium: 5
+    low: 20
+    
+  # Dependency requirements
+  max_dependency_depth: 10
+  require_hash_verification: true
+  require_signature_verification: false  # Enable when available
+  
+  # Build requirements
+  reproducible_builds: true
+  hermetic_builds: true
+  build_isolation: true
+
+# =================== NOTIFICATION SETTINGS ===================
+notifications:
+  channels:
+    slack:
+      enabled: true
+      webhook: "${SLACK_WEBHOOK_URL}"
+      
+    email:
+      enabled: true
+      recipients:
+        - "platform@spatial.com"
+        
+    ticket:
+      enabled: false
+      system: "jira"
+      
+  alerts:
+    security_critical: ["slack", "email", "ticket"]
+    security_high: ["slack", "email"]
+    security_medium: ["email"]
+    license_violation: ["email", "ticket"]
+    update_available: ["slack"]
+    compliance_failure: ["slack", "email", "ticket"]

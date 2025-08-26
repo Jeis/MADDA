@@ -11,8 +11,8 @@ session:
   single_session: false
 
 socket:
-  server_key: "spatial_platform_key_2024"
-  port: 7349
+  server_key: "${NAKAMA_SERVER_KEY}"
+  port: 7350
   address: "0.0.0.0"
   protocol: "tcp"
   max_message_size_bytes: 4096
@@ -26,6 +26,10 @@ socket:
 
 api:
   port: 7350
+  address: "0.0.0.0"
+  
+grpc:
+  port: 7349
   address: "0.0.0.0"
 
 runtime:
@@ -48,9 +52,9 @@ match:
 console:
   port: 7351
   address: "0.0.0.0"
-  username: "spatial_admin"
-  password: "spatial_console_2024"
-  signing_key: "spatial_console_signing_key"
+  username: "${NAKAMA_CONSOLE_USERNAME:-admin}"
+  password: "${NAKAMA_CONSOLE_PASSWORD}"
+  signing_key: "${NAKAMA_CONSOLE_SIGNING_KEY}"
   token_expiry_sec: 86400  # 24 hours
 
 cluster:
@@ -61,11 +65,14 @@ cluster:
 
 database:
   address:
-    - "nakama-db:5432"
-  name: "nakama"
-  user: "nakama"
-  password: "nakama"
-  ssl_mode: "disable"
+    - "postgres:5432"
+  name: "${POSTGRES_DB:-spatial_platform}"
+  user: "${POSTGRES_USER:-admin}"
+  password: "${POSTGRES_PASSWORD}"
+  ssl_mode: "require"
+  ssl_cert: "/etc/ssl/certs/server.crt"
+  ssl_key: "/etc/ssl/private/server.key"  
+  ssl_ca: "/etc/ssl/certs/ca.crt"
   conn_max_lifetime_ms: 3600000
   max_idle_conns: 50
   max_open_conns: 100

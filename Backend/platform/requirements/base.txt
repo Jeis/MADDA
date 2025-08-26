@@ -1,0 +1,24 @@
+# Spatial Platform - Base Requirements
+# Core shared dependencies for all services - ZERO functionality loss
+
+# Core web framework stack
+fastapi>=0.104.1,<0.120.0
+uvicorn[standard]>=0.24.0,<1.0.0
+pydantic>=2.5.0,<3.0.0
+pydantic-settings>=2.1.0,<3.0.0
+
+# Database and persistence
+asyncpg>=0.29.0,<1.0.0
+sqlalchemy[asyncio]>=2.0.23,<3.0.0
+psycopg2-binary>=2.9.9,<3.0.0
+
+# Async utilities
+aiofiles>=23.2.1,<25.0.0
+python-multipart>=0.0.6,<1.0.0
+httpx>=0.25.2,<1.0.0
+
+# Configuration management
+python-dotenv>=1.0.0,<2.0.0
+
+# Structured logging
+structlog>=23.2.0,<25.0.0

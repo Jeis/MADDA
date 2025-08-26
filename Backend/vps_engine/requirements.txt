@@ -1,0 +1,10 @@
+# Spatial Platform - VPS Engine Requirements
+# Modular architecture preserving ALL original functionality
+
+-r ../platform/requirements/base.txt
+-r ../platform/requirements/web.txt
+-r ../platform/requirements/compute.txt
+-r ../platform/requirements/storage.txt
+
+# Service-specific dependencies
+# (All dependencies inherited from platform requirements - zero functionality loss)

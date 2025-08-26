@@ -1,0 +1,21 @@
+# Spatial Platform - Utilities Requirements
+# Development and processing utilities
+
+# Command line and configuration
+click>=8.1.7,<9.0.0
+pyyaml>=6.0.1,<7.0.0
+tqdm>=4.66.1,<5.0.0
+toml>=0.10.2,<1.0.0
+
+# Data processing utilities
+collections-extended>=2.0.2,<3.0.0
+base64>=0.4.1,<1.0.0
+
+# File integrity and security
+hashlib-compat>=1.0.1,<2.0.0
+
+# Real-time processing (for localization service)
+asyncio-mqtt>=0.16.1,<1.0.0
+
+# Python bindings and performance
+pybind11>=2.11.1,<3.0.0

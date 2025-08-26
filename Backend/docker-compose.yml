@@ -1,0 +1,655 @@
+# Spatial Platform - Enterprise AR Platform (Open Source)
+# Production-ready Docker Compose with simplified configuration
+# 
+# Setup Instructions:
+# 1. Copy .env.example to .env
+# 2. Run: docker-compose up -d
+# 3. Access: http://localhost (nginx reverse proxy)
+
+# =================== NETWORKS ===================
+networks:
+  spatial-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+  monitoring:
+    driver: bridge
+
+# =================== VOLUMES ===================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local
+  nakama_data:
+    driver: local
+  mapping_temp:
+    driver: local
+  cloud_anchor_logs:
+    driver: local
+  vps_engine_logs:
+    driver: local
+  gateway_logs:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  nginx_cache:
+    driver: local
+  letsencrypt:
+    driver: local
+  otel_data:
+    driver: local
+  otel_logs:
+    driver: local
+  jaeger_data:
+    driver: local
+  loki_data:
+    driver: local
+
+# =================== SERVICES ===================
+services:
+  # =================== CORE INFRASTRUCTURE ===================
+  
+  postgres:
+    image: ${POSTGRES_IMAGE:-postgis/postgis:15-3.4-alpine}  # Auto-detected: ARM64 uses imresamu/postgis-arm64, AMD64 uses official
+    container_name: spatial-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-spatial_platform}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD environment variable is required}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.utf8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/local/sql/init:/docker-entrypoint-initdb.d:ro
+    command: >
+      postgres 
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=512MB
+      -c max_wal_size=2GB
+      -c wal_level=replica
+      -c max_wal_senders=3
+      -c archive_mode=off
+      -c log_connections=off
+      -c log_disconnections=off
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-spatial_platform}"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - spatial-network
+      - monitoring
+
+  redis:
+    image: ${REDIS_IMAGE:-redis:latest}
+    container_name: spatial-redis
+    command: >
+      redis-server 
+      /usr/local/etc/redis/redis.conf
+      --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD environment variable is required}
+      --protected-mode yes
+      --port 6379
+    volumes:
+      - redis_data:/data
+      - ./infrastructure/docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - spatial-network
+      - monitoring
+
+  minio:
+    image: ${MINIO_IMAGE:-minio/minio:latest}  # Latest-everywhere with dynamic updates
+    container_name: spatial-minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD environment variable is required}
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:${MINIO_CONSOLE_PORT:-9001}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - spatial-network
+    ports:
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+
+  # =================== NAKAMA GAME SERVER ===================
+  
+  nakama:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/nakama/Dockerfile
+      args:
+        - NAKAMA_IMAGE=${NAKAMA_IMAGE:-heroiclabs/nakama:3.30.0}
+        - NAKAMA_PLATFORM=${NAKAMA_PLATFORM:-linux/amd64}
+    container_name: spatial-nakama
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Database configuration
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-admin}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:-spatial_platform}
+      
+      # Nakama Security Configuration - Environment Variables for Production Security
+      - NAKAMA_CONSOLE_USERNAME=${NAKAMA_CONSOLE_USERNAME:-admin}
+      - NAKAMA_CONSOLE_PASSWORD=${NAKAMA_CONSOLE_PASSWORD:?NAKAMA_CONSOLE_PASSWORD environment variable is required}
+      - NAKAMA_CONSOLE_ADDRESS=${NAKAMA_CONSOLE_ADDRESS}  # Environment-aware: 0.0.0.0 for Docker, 127.0.0.1 for direct
+      - NAKAMA_SESSION_ENCRYPTION_KEY=${NAKAMA_SESSION_ENCRYPTION_KEY:?NAKAMA_SESSION_ENCRYPTION_KEY environment variable is required}
+      - NAKAMA_SESSION_REFRESH_KEY=${NAKAMA_SESSION_REFRESH_KEY:?NAKAMA_SESSION_REFRESH_KEY environment variable is required}
+      - NAKAMA_CONSOLE_SIGNING_KEY=${NAKAMA_CONSOLE_SIGNING_KEY:?NAKAMA_CONSOLE_SIGNING_KEY environment variable is required}
+      - NAKAMA_SERVER_KEY=${NAKAMA_SERVER_KEY:?NAKAMA_SERVER_KEY environment variable is required}
+      - NAKAMA_HTTP_KEY=${NAKAMA_HTTP_KEY:?NAKAMA_HTTP_KEY environment variable is required}
+      - NAKAMA_SECURITY_SIGNING_KEY=${NAKAMA_SECURITY_SIGNING_KEY:?NAKAMA_SECURITY_SIGNING_KEY environment variable is required}
+      
+      # System configuration
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - nakama_data:/nakama/data
+      - ./infrastructure/docker/nakama/config/nakama.yml:/nakama/data/nakama.yml:ro
+      - ./infrastructure/docker/nakama/modules:/nakama/data/modules:ro
+    entrypoint:
+      - "/bin/sh"
+      - "-c"
+      - >
+        echo "Starting Nakama with environment-based security configuration..." &&
+        /usr/local/bin/wait-for-postgres.sh &&
+        /nakama/nakama migrate up --database.address ${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-spatial_platform} &&
+        exec /nakama/nakama --config /nakama/data/nakama.yml --database.address ${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-spatial_platform}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7350/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - spatial-network
+      - monitoring
+    ports:
+      - "${NAKAMA_HTTP_PORT:-7350}:7350"      # HTTP API + WebSocket (standard)
+      - "${NAKAMA_GRPC_PORT:-7349}:7349"      # gRPC API (standard)
+      - "7348:7348"                           # gRPC API of embedded console (internal)
+      - "${NAKAMA_CONSOLE_PORT:-7351}:7351"   # Admin Console HTTP (standard)
+      - "${NAKAMA_METRICS_PORT:-9100}:9100"   # Prometheus metrics endpoint
+
+  # =================== SPATIAL SERVICES ===================
+  
+  gateway:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/api-gateway/Dockerfile
+    container_name: spatial-gateway
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-spatial_platform}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - NAKAMA_HOST=nakama
+      - NAKAMA_PORT=7350
+      - NAKAMA_KEY=${NAKAMA_KEY}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      # Source code is baked into image for production
+      - gateway_logs:/var/log/spatial/api-gateway
+      - mapping_temp:/tmp/mapping
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nakama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - spatial-network
+      - monitoring
+    ports:
+      - "${GATEWAY_PORT:-8000}:8000"
+
+  localization:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/localization/Dockerfile  
+    container_name: spatial-localization
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-spatial_platform}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - NAKAMA_HOST=nakama
+      - NAKAMA_PORT=7350
+      - NAKAMA_KEY=${NAKAMA_KEY}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      # Source code is baked into image for production
+      - mapping_temp:/tmp/slam
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - spatial-network
+      - monitoring
+    ports:
+      - "${LOCALIZATION_PORT:-8081}:8080"
+
+  vps-engine:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/vps/Dockerfile
+    container_name: spatial-vps-engine
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-spatial_platform}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - MINIO_HOST=minio
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET environment variable is required}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - STORAGE_ACCESS_KEY=${STORAGE_ACCESS_KEY:-minioadmin}
+      - STORAGE_SECRET_KEY=${STORAGE_SECRET_KEY:-${MINIO_ROOT_PASSWORD}}
+      - STORAGE_ENDPOINT=${STORAGE_ENDPOINT:-minio:9000}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      # Source code is baked into image for production
+      - vps_engine_logs:/var/log/spatial/vps-engine
+      - mapping_temp:/tmp/vps
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - spatial-network
+      - monitoring
+    ports:
+      - "${VPS_ENGINE_PORT:-9002}:9000"
+      - "${VPS_METRICS_PORT:-9003}:9001"
+
+  cloud-anchor-service:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/cloud-anchor/Dockerfile
+    container_name: spatial-cloud-anchors
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-spatial_platform}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - MINIO_HOST=minio
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET environment variable is required}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - STORAGE_ACCESS_KEY=${STORAGE_ACCESS_KEY:-minioadmin}
+      - STORAGE_SECRET_KEY=${STORAGE_SECRET_KEY:-${MINIO_ROOT_PASSWORD}}
+      - STORAGE_ENDPOINT=${STORAGE_ENDPOINT:-minio:9000}
+      - PORT=${CLOUD_ANCHOR_PORT:-9004}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      # Source code is baked into image for production
+      - cloud_anchor_logs:/var/log/spatial/cloud-anchors
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9004/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - spatial-network
+      - monitoring
+    ports:
+      - "${CLOUD_ANCHOR_PORT:-9004}:9004"
+
+  mapping-processor:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/mapping/Dockerfile
+    container_name: spatial-mapping-processor
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-spatial_platform}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - MINIO_HOST=minio
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      # Source code is baked into image for production
+      - mapping_temp:/tmp/colmap
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+    restart: unless-stopped
+    networks:
+      - spatial-network
+      - monitoring
+
+  # =================== REVERSE PROXY ===================
+  
+  nginx:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/nginx/Dockerfile
+    container_name: spatial-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8443:8443"  # Monitoring (Grafana)
+      - "9443:9443"  # Admin Console (Nakama)
+    volumes:
+      - nginx_cache:/var/cache/nginx
+      - letsencrypt:/etc/letsencrypt
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./infrastructure/docker/nginx/html:/var/www/html:ro
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - ENABLE_CERTBOT=${ENABLE_CERTBOT:-false}
+      - DOMAIN_NAME=${DOMAIN_NAME:-localhost}
+      - NGINX_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+    depends_on:
+      gateway:
+        condition: service_healthy
+      nakama:
+        condition: service_healthy
+      grafana:
+        condition: service_healthy
+      localization:
+        condition: service_healthy
+      mapping-processor:
+        condition: service_healthy
+      prometheus:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - spatial-network
+      - monitoring
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # =================== OBSERVABILITY STACK ===================
+  
+  otel-collector:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/otel-collector/Dockerfile
+    container_name: spatial-otel-collector
+    volumes:
+      - ./infrastructure/docker/otel-collector/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+      - otel_data:/data
+      - otel_logs:/logs
+    ports:
+      - "4317:4317"  # OTLP gRPC
+      - "4318:4318"  # OTLP HTTP
+      - "8888:8888"  # Collector metrics
+      - "8889:8889"  # Prometheus metrics export
+      - "13133:13133" # Health check
+      - "55679:55679" # zpages
+    depends_on:
+      - jaeger
+      - prometheus
+      - loki
+    restart: unless-stopped
+    networks:
+      - spatial-network
+      - monitoring
+    # Health check disabled - service monitored via external scraping at :13133/health
+    # OTEL collector is a pipeline service without traditional health semantics
+    healthcheck:
+      disable: true
+    environment:
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=otel-collector,service.version=0.132.0,deployment.environment=${ENVIRONMENT:-development}
+
+  prometheus:
+    image: ${PROMETHEUS_IMAGE:-prom/prometheus:latest}
+    container_name: spatial-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    volumes:
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    restart: unless-stopped
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+    image: ${GRAFANA_IMAGE:-grafana/grafana:latest}  # Latest-everywhere with automatic security updates
+    container_name: spatial-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/monitoring/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ./infrastructure/monitoring/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./infrastructure/monitoring/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      jaeger:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Container Resource Monitoring - PROJECT_STANDARDS.md compliant
+  cadvisor:
+    image: ${CADVISOR_IMAGE:-gcr.io/cadvisor/cadvisor:latest}  # Latest-everywhere monitoring
+    container_name: spatial-cadvisor
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+      # Docker Desktop compatibility - mount actual socket location
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "${CADVISOR_PORT:-8080}:8080"
+    # Minimal enterprise configuration for cAdvisor v0.52.1 - maximum compatibility
+    command:
+      - '--housekeeping_interval=10s'  # More frequent monitoring for AR/VR workloads
+    environment:
+      - DOCKER_API_VERSION=1.40
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+  jaeger:
+    image: ${JAEGER_IMAGE:-jaegertracing/all-in-one:latest}
+    container_name: spatial-jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    volumes:
+      - jaeger_data:/tmp
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # Jaeger collector HTTP
+      - "9411:9411"    # Zipkin collector
+    restart: unless-stopped
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:16686/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  loki:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/loki/Dockerfile
+    container_name: spatial-loki
+    volumes:
+      - ./infrastructure/docker/loki/loki-config.yaml:/etc/loki/config.yaml:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    restart: unless-stopped
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Redis Exporter for Prometheus metrics collection
+  redis-exporter:
+    image: ${REDIS_EXPORTER_IMAGE:-oliver006/redis_exporter:latest}
+    container_name: spatial-redis-exporter
+    environment:
+      - REDIS_ADDR=redis://:${REDIS_PASSWORD}@redis:6379
+    ports:
+      - "9121:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - spatial-network
+      - monitoring
+    healthcheck:
+      test: ["CMD", "/redis_exporter", "-version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # PostgreSQL Exporter for Prometheus metrics collection
+  postgres-exporter:
+    image: ${POSTGRES_EXPORTER_IMAGE:-prometheuscommunity/postgres-exporter:latest}  # Latest-everywhere PostgreSQL monitoring
+    container_name: spatial-postgres-exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://admin:${POSTGRES_PASSWORD}@postgres:5432/spatial_platform?sslmode=disable
+    volumes:
+      - ./infrastructure/monitoring/postgres_exporter.yml:/postgres_exporter.yml:ro
+    ports:
+      - "9187:9187"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - spatial-network
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9187/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

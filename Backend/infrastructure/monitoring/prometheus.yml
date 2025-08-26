@@ -1,0 +1,239 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    platform: 'spatial-platform'
+    environment: '${ENVIRONMENT:-development}'
+
+# Rule files for alerting
+rule_files:
+  - "/etc/prometheus/rules/*.yml"
+
+# Alerting configuration  
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 15s
+
+  # Spatial Platform Core Services
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['gateway:8000']
+    metrics_path: /metrics
+    scrape_interval: 5s  # High frequency for real-time AR/VR metrics
+    scrape_timeout: 5s
+    params:
+      format: ['prometheus']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'api-gateway'
+      - source_labels: [__address__]
+        target_label: tier
+        replacement: 'high-performance'
+
+  - job_name: 'localization-service'
+    static_configs:
+      - targets: ['localization:8080']
+    metrics_path: /metrics
+    scrape_interval: 5s  # Critical 60fps service - high frequency scraping
+    scrape_timeout: 3s
+    params:
+      format: ['prometheus']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'localization'
+      - source_labels: [__address__]
+        target_label: tier
+        replacement: 'critical-60fps'
+
+  - job_name: 'vps-engine'
+    static_configs:
+      - targets: ['vps-engine:9000']
+    metrics_path: /metrics
+    scrape_interval: 15s
+    scrape_timeout: 5s
+    params:
+      format: ['prometheus']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'vps-engine'
+      - source_labels: [__address__]
+        target_label: tier
+        replacement: 'high-performance'
+
+  - job_name: 'cloud-anchors'
+    static_configs:
+      - targets: ['cloud-anchor-service:9004']
+    metrics_path: /metrics
+    scrape_interval: 15s
+    scrape_timeout: 5s
+    params:
+      format: ['prometheus']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'cloud-anchors'
+      - source_labels: [__address__]
+        target_label: tier
+        replacement: 'standard'
+
+  - job_name: 'mapping-processor'
+    static_configs:
+      - targets: ['mapping-processor:8080']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    params:
+      format: ['prometheus']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'mapping-processor'
+      - source_labels: [__address__]
+        target_label: tier
+        replacement: 'background'
+
+  # Nakama Game Server Metrics
+  - job_name: 'nakama'
+    static_configs:
+      - targets: ['nakama:9100']
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 10s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'nakama-multiplayer'
+      - source_labels: [__address__]
+        target_label: tier
+        replacement: 'high-performance'
+
+  # Infrastructure Services  
+  # Note: Redis and Postgres require dedicated exporters for metrics
+  # Direct protocol scraping removed to prevent security alerts
+  
+  # Redis metrics collection via Redis Exporter
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+    metrics_path: /metrics
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: redis-exporter:9121
+  
+  # PostgreSQL metrics collection via Postgres Exporter
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+    metrics_path: /metrics
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: postgres-exporter:9187
+
+  # OpenTelemetry Collector Metrics
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8889']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'otel-collector'
+      - source_labels: [__address__]
+        target_label: component
+        replacement: 'observability'
+
+  # Grafana Metrics
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'grafana'
+      - source_labels: [__address__]
+        target_label: component
+        replacement: 'visualization'
+
+  # Container Runtime Metrics (if available)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    metrics_path: /metrics
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: 'cadvisor'
+      - source_labels: [__address__]
+        target_label: component
+        replacement: 'container-metrics'
+
+  # =================== AR/VR PERFORMANCE MONITORING ===================
+  # Specialized monitoring for AR/VR spatial computing workloads
+  
+  # AR/VR Performance Composite Monitoring
+  - job_name: 'ar-vr-performance'
+    scrape_interval: 1s  # Ultra-high frequency for 60fps AR/VR tracking
+    scrape_timeout: 500ms
+    static_configs:
+      - targets:
+          - 'localization:8080'    # SLAM/VIO tracking performance
+          - 'gateway:8000'         # AR session management  
+          - 'vps-engine:9000'      # Visual-positional tracking
+    metrics_path: /metrics
+    params:
+      ar_vr_mode: ['enabled']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: workload_type
+        replacement: 'ar-vr-realtime'
+      - source_labels: [__address__]
+        target_label: performance_tier
+        replacement: 'ultra-low-latency'
+      - source_labels: [__address__]
+        target_label: target_fps
+        replacement: '60fps'
+
+  # Spatial Computing Resource Monitoring  
+  - job_name: 'spatial-computing-resources'
+    scrape_interval: 2s  # Monitor memory/CPU for 3D processing
+    static_configs:
+      - targets:
+          - 'mapping-processor:8080'   # 3D reconstruction
+          - 'cloud-anchor-service:9004' # Spatial anchoring
+    metrics_path: /metrics
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: workload_type
+        replacement: 'spatial-3d-processing'
+      - source_labels: [__address__]
+        target_label: performance_tier
+        replacement: 'compute-intensive'

@@ -19,7 +19,7 @@ namespace SpatialPlatform.Nakama
         [SerializeField] private string scheme = "http";
         [SerializeField] private string host = "localhost";
         [SerializeField] private int port = 7350;
-        [SerializeField] private string serverKey = "defaultkey";
+        [SerializeField] private string serverKey = "defaultkey"; // TODO: Change in production - set your NAKAMA_SERVER_KEY
         
         [Header("AR Configuration")]
         [SerializeField] private ARSession arSession;

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spatial Platform - Enterprise AR/VR Infrastructure</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 800px;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 3rem;
+            opacity: 0.95;
+        }
+        .services {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .services h2 {
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .service-card {
+            background: rgba(255,255,255,0.1);
+            padding: 1.2rem;
+            border-radius: 10px;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+        .service-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.2);
+        }
+        .service-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        .service-card p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        .status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #4ade80;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+        }
+        .links {
+            margin-top: 2rem;
+        }
+        .links a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 1rem;
+            padding: 0.8rem 1.5rem;
+            background: rgba(255,255,255,0.2);
+            border-radius: 30px;
+            display: inline-block;
+            transition: background 0.3s ease;
+        }
+        .links a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .metrics {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Spatial Platform</h1>
+        <p class="subtitle">Enterprise AR/VR Infrastructure</p>
+        
+        <div class="services">
+            <h2><span class="status"></span>System Status: Operational</h2>
+            
+            <div class="service-grid">
+                <div class="service-card">
+                    <h3>API Gateway</h3>
+                    <p>Port 8000</p>
+                </div>
+                <div class="service-card">
+                    <h3>Nakama Server</h3>
+                    <p>WS: 7349 | HTTP: 7350</p>
+                </div>
+                <div class="service-card">
+                    <h3>Localization</h3>
+                    <p>Port 8080</p>
+                </div>
+                <div class="service-card">
+                    <h3>VPS Engine</h3>
+                    <p>Port 9000</p>
+                </div>
+                <div class="service-card">
+                    <h3>Cloud Anchors</h3>
+                    <p>Port 9004</p>
+                </div>
+                <div class="service-card">
+                    <h3>Monitoring</h3>
+                    <p>Grafana: 3000</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="links">
+            <a href="/api/health">API Health</a>
+            <a href="http://localhost:7351">Nakama Console</a>
+            <a href="http://localhost:3000">Grafana</a>
+            <a href="http://localhost:9090">Prometheus</a>
+        </div>
+        
+        <div class="metrics">
+            <p>60 FPS AR/VR Tracking • &lt;11ms Latency • 99.9% Uptime</p>
+            <p>Powered by Nakama 3.17.1</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,9 @@
+# Postgres Exporter Configuration
+# Configuration is done via environment variables
+# This file provides minimal valid YAML to suppress config file warnings
+
+# Empty configuration - all settings come from environment variables
+{}
+
+# Custom queries can be added here if needed
+# See: https://github.com/prometheus-community/postgres_exporter#queries

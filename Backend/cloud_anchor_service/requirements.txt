@@ -1,0 +1,9 @@
+# Spatial Platform - Cloud Anchor Service Requirements
+# Modular architecture preserving ALL original functionality
+
+-r ../platform/requirements/base.txt
+-r ../platform/requirements/web.txt
+-r ../platform/requirements/compute.txt
+
+# Service-specific dependencies
+# (All dependencies inherited from platform requirements - zero functionality loss)
