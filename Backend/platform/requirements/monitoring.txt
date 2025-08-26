@@ -1,26 +1,26 @@
 # Spatial Platform - Monitoring Requirements
 # Enterprise observability stack - PRESERVING ALL TELEMETRY
 
-# Core metrics and monitoring
-prometheus-client>=0.19.0,<1.0.0
-sentry-sdk>=1.38.0,<2.0.0
+# Core metrics and monitoring (UPDATED)
+prometheus-client>=0.21.1,<1.0.0  # Latest stable
+sentry-sdk>=2.18.0,<3.0.0  # Major performance improvements
 
-# OpenTelemetry instrumentation (CRITICAL - actively used by services)
-opentelemetry-api>=1.21.0,<2.0.0
-opentelemetry-sdk>=1.21.0,<2.0.0
-opentelemetry-instrumentation>=0.42b0,<1.0.0
+# OpenTelemetry instrumentation (CRITICAL - UPDATED)
+opentelemetry-api>=1.29.0,<2.0.0  # Latest stable API
+opentelemetry-sdk>=1.29.0,<2.0.0  # Latest stable SDK
+opentelemetry-instrumentation>=0.50b0,<1.0.0  # Latest instrumentation
 
-# Service instrumentation (CRITICAL for API Gateway, Localization Service)
-opentelemetry-instrumentation-fastapi>=0.42b0,<1.0.0
-opentelemetry-instrumentation-requests>=0.42b0,<1.0.0
-opentelemetry-instrumentation-psycopg2>=0.42b0,<1.0.0
-opentelemetry-instrumentation-redis>=0.42b0,<1.0.0
+# Service instrumentation (CRITICAL - UPDATED)
+opentelemetry-instrumentation-fastapi>=0.50b0,<1.0.0  # Compatible with FastAPI 0.115+
+opentelemetry-instrumentation-requests>=0.50b0,<1.0.0  # Latest stable
+opentelemetry-instrumentation-psycopg2>=0.50b0,<1.0.0  # Database tracing
+opentelemetry-instrumentation-redis>=0.50b0,<1.0.0  # Redis tracing
 
-# Exporters (CRITICAL for telemetry collection)
-opentelemetry-exporter-otlp>=1.21.0,<2.0.0
-opentelemetry-exporter-jaeger>=1.21.0,<2.0.0
-opentelemetry-exporter-prometheus>=1.12.0rc1,<2.0.0
+# Exporters (CRITICAL - UPDATED)
+opentelemetry-exporter-otlp>=1.29.0,<2.0.0  # Latest OTLP exporter
+opentelemetry-exporter-jaeger>=1.29.0,<2.0.0  # Latest Jaeger exporter
+opentelemetry-exporter-prometheus>=0.50b0,<1.0.0  # Latest Prometheus exporter
 
-# Propagators (CRITICAL for distributed tracing)
-opentelemetry-propagator-b3>=1.21.0,<2.0.0
-opentelemetry-propagator-jaeger>=1.21.0,<2.0.0
+# Propagators (CRITICAL - UPDATED)
+opentelemetry-propagator-b3>=1.29.0,<2.0.0  # Latest B3 propagator
+opentelemetry-propagator-jaeger>=1.29.0,<2.0.0  # Latest Jaeger propagator

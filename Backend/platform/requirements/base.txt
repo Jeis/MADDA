@@ -1,24 +1,24 @@
 # Spatial Platform - Base Requirements
 # Core shared dependencies for all services - ZERO functionality loss
 
-# Core web framework stack
-fastapi>=0.104.1,<0.120.0
-uvicorn[standard]>=0.24.0,<1.0.0
-pydantic>=2.5.0,<3.0.0
-pydantic-settings>=2.1.0,<3.0.0
+# Core web framework stack (SECURITY UPDATED)
+fastapi>=0.115.5,<0.120.0  # CVE-2024-47874: DoS vulnerability fix
+uvicorn[standard]>=0.32.1,<1.0.0  # Latest stable with security improvements
+pydantic>=2.10.3,<3.0.0  # CVE-2024-3772: Regex DoS vulnerability fix  
+pydantic-settings>=2.7.0,<3.0.0  # Compatible with Pydantic 2.10.3
 
-# Database and persistence
-asyncpg>=0.29.0,<1.0.0
-sqlalchemy[asyncio]>=2.0.23,<3.0.0
-psycopg2-binary>=2.9.9,<3.0.0
+# Database and persistence (SECURITY UPDATED)
+asyncpg>=0.30.0,<1.0.0  # Latest stable with bug fixes
+sqlalchemy[asyncio]>=2.0.36,<3.0.0  # Latest stable with performance improvements
+psycopg2-binary>=2.9.10,<3.0.0  # Security patches
 
-# Async utilities
-aiofiles>=23.2.1,<25.0.0
-python-multipart>=0.0.6,<1.0.0
-httpx>=0.25.2,<1.0.0
+# Async utilities (SECURITY UPDATED)
+aiofiles>=24.1.0,<25.0.0  # Latest stable
+python-multipart>=0.0.20,<1.0.0  # Security and bug fixes
+httpx>=0.28.1,<1.0.0  # HTTP/2 improvements and security fixes
 
 # Configuration management
 python-dotenv>=1.0.0,<2.0.0
 
-# Structured logging
-structlog>=23.2.0,<25.0.0
+# Structured logging (UPDATED)
+structlog>=24.5.0,<25.0.0  # Latest stable with performance improvements

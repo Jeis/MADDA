@@ -1,16 +1,16 @@
 # Spatial Platform - Compute Requirements
 # Computer vision, ML, and numerical computing stack - PRESERVING ALL FUNCTIONALITY
 
-# Core numerical computing
-numpy>=1.24.3,<2.0.0
-scipy>=1.11.4,<2.0.0
+# Core numerical computing (SECURITY UPDATED)
+numpy>=2.1.3,<3.0.0  # Major version upgrade with security fixes
+scipy>=1.14.1,<2.0.0  # Latest stable with performance improvements
 
-# Computer vision and image processing
-opencv-python>=4.8.1.78,<5.0.0
-opencv-python-headless>=4.8.1.78,<5.0.0
-Pillow>=10.1.0,<12.0.0
-scikit-image>=0.22.0,<1.0.0
-imageio>=2.31.5,<3.0.0
+# Computer vision and image processing (SECURITY UPDATED)  
+opencv-python>=4.10.0.84,<5.0.0  # Security fixes and GPU acceleration
+opencv-python-headless>=4.10.0.84,<5.0.0  # Headless version for servers
+Pillow>=11.0.0,<12.0.0  # CRITICAL security updates for image processing
+scikit-image>=0.24.0,<1.0.0  # Latest stable with bug fixes
+imageio>=2.36.1,<3.0.0  # Format support improvements
 
 # 3D reconstruction and processing (CRITICAL for mapping pipeline)
 pycolmap>=0.4.0,<1.0.0
@@ -18,12 +18,12 @@ open3d>=0.18.0,<1.0.0
 trimesh>=4.0.5,<5.0.0
 vtk>=9.3.0,<10.0.0
 
-# Machine learning (CRITICAL for VPS engine)
-torch>=2.1.1,<3.0.0
-torchvision>=0.16.1,<1.0.0
-scikit-learn>=1.3.2,<2.0.0
+# Machine learning (CRITICAL - UPDATED)
+torch>=2.5.1,<3.0.0  # Latest stable with CUDA 12 support
+torchvision>=0.20.1,<1.0.0  # Compatible with PyTorch 2.5
+scikit-learn>=1.5.2,<2.0.0  # Latest stable with performance improvements
 
-# Scientific computing utilities
-matplotlib>=3.7.2,<4.0.0
-numba>=0.58.1,<1.0.0
-filterpy>=1.4.5,<2.0.0
+# Scientific computing utilities (UPDATED)
+matplotlib>=3.10.0,<4.0.0  # Latest stable with GUI improvements  
+numba>=0.60.0,<1.0.0  # CUDA 12 support and performance improvements
+filterpy>=1.4.5,<2.0.0  # Still current, no issues
